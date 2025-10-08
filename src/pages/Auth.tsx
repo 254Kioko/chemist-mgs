@@ -8,8 +8,14 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Pill } from 'lucide-react';
 
+// Predefined credentials mapping
+const CREDENTIALS = {
+  admin: { email: 'admin@chemist.com', password: 'admin123' },
+  cashier: { email: 'cashier@chemist.com', password: 'cashier123' },
+};
+
 export default function Auth() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -20,9 +26,24 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      const lowercaseUsername = username.toLowerCase().trim();
+      
+      // Check if username exists in predefined credentials
+      if (!CREDENTIALS[lowercaseUsername as keyof typeof CREDENTIALS]) {
+        throw new Error('Invalid username or password');
+      }
+
+      const credentials = CREDENTIALS[lowercaseUsername as keyof typeof CREDENTIALS];
+      
+      // Verify password matches
+      if (password !== credentials.password) {
+        throw new Error('Invalid username or password');
+      }
+
+      // Sign in with mapped email
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: credentials.email,
+        password: credentials.password,
       });
 
       if (error) throw error;
@@ -57,13 +78,13 @@ export default function Auth() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="admin or cashier"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -81,6 +102,10 @@ export default function Auth() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
+            <div className="text-xs text-center text-muted-foreground mt-4">
+              <p>Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
+              <p>Username: <strong>cashier</strong> | Password: <strong>cashier123</strong></p>
+            </div>
           </form>
         </CardContent>
       </Card>
