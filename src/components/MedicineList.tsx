@@ -44,6 +44,26 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
 
   useEffect(() => {
     fetchMedicines();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('medicines-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'medicines'
+        },
+        () => {
+          fetchMedicines();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [refreshTrigger]);
 
   const handleEdit = (medicine: Medicine) => {
