@@ -73,7 +73,7 @@ export default function Auth() {
             <Pill className="w-8 h-8 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl font-bold">Chemist Management System</CardTitle>
-          <CardDescription>Sign in to manage your pharmacy</CardDescription>
+          <CardDescription>Sign in to manage your records</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -103,8 +103,7 @@ export default function Auth() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
             <div className="text-xs text-center text-muted-foreground mt-4">
-              <p>Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
-              <p>Username: <strong>cashier</strong> | Password: <strong>cashier123</strong></p>
+              <p>Username: <strong>contact developer incase</strong> | Password: <strong>of any challenge</strong></p>
             </div>
           </form>
         </CardContent>
