@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, BarChart3 } from 'lucide-react';
 import { AddMedicineForm } from '@/components/AddMedicineForm';
 import { MedicineList } from '@/components/MedicineList';
 
@@ -37,9 +37,15 @@ const Index = () => {
               Welcome back! Role: <span className="font-semibold capitalize">{role}</span>
             </p>
           </div>
-          <Button onClick={signOut} variant="outline">
-            Sign Out
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/manager')} variant="outline">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Manager Dashboard
+            </Button>
+            <Button onClick={signOut} variant="outline">
+              Sign Out
+            </Button>
+          </div>
         </div>
         
         <div className="grid gap-6">
