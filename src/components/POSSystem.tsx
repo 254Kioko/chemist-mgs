@@ -285,11 +285,12 @@ export const POSSystem = () => {
                   <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>
-                <Button onClick={addToCart} className="w-full">
+
+            </div>
+                            <Button onClick={addToCart} className="w-full">
             <Plus className="w-4 h-4 mr-2" />
             Add to Cart
           </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
