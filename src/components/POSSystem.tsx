@@ -268,6 +268,17 @@ export const POSSystem = () => {
             </div>
           </div>
 
+          {quantity && unitPrice && parseFloat(unitPrice) > 0 && parseInt(quantity) > 0 && (
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Subtotal:</span>
+                <span className="text-lg font-bold">
+                  KES {(parseFloat(unitPrice) * parseInt(quantity)).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
           <Button onClick={addToCart} className="w-full">
             <Plus className="w-4 h-4 mr-2" />
             Add to Cart
