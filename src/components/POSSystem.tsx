@@ -12,6 +12,7 @@ import { Trash2, ShoppingCart, Plus } from 'lucide-react';
 interface Medicine {
   id: string;
   name: string;
+  cost: number;
   quantity: number;
 }
 
@@ -28,8 +29,8 @@ export const POSSystem = () => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedMedicine, setSelectedMedicine] = useState('');
-  const [quantity, setQuantity] = useState(1);
-  const [unitPrice, setUnitPrice] = useState(0);
+  const [quantity, setQuantity] = useState('');
+  const [unitPrice, setUnitPrice] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -58,8 +59,19 @@ export const POSSystem = () => {
     setMedicines(data || []);
   };
 
+  const handleMedicineSelect = (medicineId: string) => {
+    setSelectedMedicine(medicineId);
+    const medicine = medicines.find(m => m.id === medicineId);
+    if (medicine) {
+      setUnitPrice(medicine.cost.toString());
+    }
+  };
+
   const addToCart = () => {
-    if (!selectedMedicine || quantity <= 0 || unitPrice <= 0) {
+    const qty = parseInt(quantity);
+    const price = parseFloat(unitPrice);
+    
+    if (!selectedMedicine || !quantity || qty <= 0 || !unitPrice || price <= 0) {
       toast({
         title: 'Invalid Input',
         description: 'Please select a medicine and enter valid quantity and price',
@@ -71,7 +83,7 @@ export const POSSystem = () => {
     const medicine = medicines.find(m => m.id === selectedMedicine);
     if (!medicine) return;
 
-    if (quantity > medicine.quantity) {
+    if (qty > medicine.quantity) {
       toast({
         title: 'Insufficient Stock',
         description: `Only ${medicine.quantity} units available`,
@@ -84,22 +96,22 @@ export const POSSystem = () => {
     if (existingItem) {
       setCart(cart.map(item =>
         item.medicineId === selectedMedicine
-          ? { ...item, quantity: item.quantity + quantity, totalPrice: (item.quantity + quantity) * unitPrice }
+          ? { ...item, quantity: item.quantity + qty, totalPrice: (item.quantity + qty) * price }
           : item
       ));
     } else {
       setCart([...cart, {
         medicineId: selectedMedicine,
         medicineName: medicine.name,
-        quantity,
-        unitPrice,
-        totalPrice: quantity * unitPrice,
+        quantity: qty,
+        unitPrice: price,
+        totalPrice: qty * price,
       }]);
     }
 
     setSelectedMedicine('');
-    setQuantity(1);
-    setUnitPrice(0);
+    setQuantity('');
+    setUnitPrice('');
   };
 
   const removeFromCart = (medicineId: string) => {
@@ -218,7 +230,7 @@ export const POSSystem = () => {
         <CardContent className="space-y-4">
           <div>
             <Label>Medicine</Label>
-            <Select value={selectedMedicine} onValueChange={setSelectedMedicine}>
+            <Select value={selectedMedicine} onValueChange={handleMedicineSelect}>
               <SelectTrigger>
                 <SelectValue placeholder="Select medicine" />
               </SelectTrigger>
@@ -232,14 +244,15 @@ export const POSSystem = () => {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Quantity</Label>
               <Input
                 type="number"
                 min="1"
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="Enter quantity"
               />
             </div>
             <div>
@@ -249,12 +262,16 @@ export const POSSystem = () => {
                 min="0"
                 step="0.01"
                 value={unitPrice}
-                onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+                onChange={(e) => setUnitPrice(e.target.value)}
+                placeholder="Enter price"
               />
             </div>
           </div>
 
-        
+          <Button onClick={addToCart} className="w-full">
+            <Plus className="w-4 h-4 mr-2" />
+            Add to Cart
+          </Button>
 
           <div className="pt-4 border-t space-y-4">
             <div>
@@ -285,12 +302,7 @@ export const POSSystem = () => {
                   <SelectItem value="card">Card</SelectItem>
                 </SelectContent>
               </Select>
-
             </div>
-                            <Button onClick={addToCart} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Add to Cart
-          </Button>
           </div>
         </CardContent>
       </Card>
@@ -304,16 +316,17 @@ export const POSSystem = () => {
             <p className="text-center text-muted-foreground py-8">Cart is empty</p>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Qty</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Qty</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {cart.map((item) => (
                     <TableRow key={item.medicineId}>
@@ -333,7 +346,8 @@ export const POSSystem = () => {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+                </Table>
+              </div>
 
               <div className="mt-4 pt-4 border-t">
                 <div className="flex justify-between items-center text-lg font-bold mb-4">

@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       medicines: {
         Row: {
+          cost: number
           created_at: string
           id: string
           name: string
@@ -23,6 +24,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cost?: number
           created_at?: string
           id?: string
           name: string
@@ -30,6 +32,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cost?: number
           created_at?: string
           id?: string
           name?: string

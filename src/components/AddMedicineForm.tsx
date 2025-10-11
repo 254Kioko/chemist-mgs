@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function AddMedicineForm({ onMedicineAdded }: { onMedicineAdded: () => void }) {
   const [name, setName] = useState('');
+  const [cost, setCost] = useState('');
   const [quantity, setQuantity] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -22,6 +23,7 @@ export function AddMedicineForm({ onMedicineAdded }: { onMedicineAdded: () => vo
         .insert([
           {
             name: name.trim(),
+            cost: parseFloat(cost),
             quantity: parseInt(quantity),
           },
         ]);
@@ -34,6 +36,7 @@ export function AddMedicineForm({ onMedicineAdded }: { onMedicineAdded: () => vo
       });
 
       setName('');
+      setCost('');
       setQuantity('');
       onMedicineAdded();
     } catch (error: any) {
@@ -62,6 +65,19 @@ export function AddMedicineForm({ onMedicineAdded }: { onMedicineAdded: () => vo
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter medicine name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cost">Cost per Unit (KES)</Label>
+            <Input
+              id="cost"
+              type="number"
+              min="0"
+              step="0.01"
+              value={cost}
+              onChange={(e) => setCost(e.target.value)}
+              placeholder="Enter cost price"
               required
             />
           </div>

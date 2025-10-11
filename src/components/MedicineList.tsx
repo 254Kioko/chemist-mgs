@@ -10,6 +10,7 @@ import { Pencil, Save, X, Trash2 } from 'lucide-react';
 interface Medicine {
   id: string;
   name: string;
+  cost: number;
   quantity: number;
   created_at: string;
   updated_at: string;
@@ -144,31 +145,34 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
         {medicines.length === 0 ? (
           <p className="text-muted-foreground">No medicines in inventory</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Medicine Name</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {medicines.map((medicine) => (
-                <TableRow key={medicine.id}>
-                  <TableCell className="font-medium">{medicine.name}</TableCell>
-                  <TableCell>
-                    {editingId === medicine.id ? (
-                      <Input
-                        type="number"
-                        min="0"
-                        value={editQuantity}
-                        onChange={(e) => setEditQuantity(e.target.value)}
-                        className="w-24"
-                      />
-                    ) : (
-                      medicine.quantity
-                    )}
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Medicine Name</TableHead>
+                  <TableHead>Cost</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {medicines.map((medicine) => (
+                  <TableRow key={medicine.id}>
+                    <TableCell className="font-medium">{medicine.name}</TableCell>
+                    <TableCell>KES {medicine.cost.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {editingId === medicine.id ? (
+                        <Input
+                          type="number"
+                          min="0"
+                          value={editQuantity}
+                          onChange={(e) => setEditQuantity(e.target.value)}
+                          className="w-24"
+                        />
+                      ) : (
+                        medicine.quantity
+                      )}
+                    </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {editingId === medicine.id ? (
@@ -211,9 +215,10 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
