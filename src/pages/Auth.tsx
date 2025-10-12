@@ -10,8 +10,8 @@ import { Pill } from 'lucide-react';
 
 // Predefined credentials mapping
 const CREDENTIALS = {
-  admin: { email: 'kiokoeddie254@gmail.com', password: '2025!Chemist' },
-  cashier: { email: 'chrismusembi0018@gmail.com', password: '5025!Chemist' },
+  admin: { email: 'kiokoeddie254@gmail.com', password: 'admin123' },
+  cashier: { email: 'chrismusembi0018@gmail.com', password: 'cashier123' },
 };
 
 export default function Auth() {
