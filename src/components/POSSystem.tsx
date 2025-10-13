@@ -227,95 +227,103 @@ export const POSSystem = () => {
             Add Items
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>Medicine</Label>
-            <Select value={selectedMedicine} onValueChange={handleMedicineSelect}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select medicine" />
-              </SelectTrigger>
-              <SelectContent>
-                {medicines.map(medicine => (
-                  <SelectItem key={medicine.id} value={medicine.id}>
-                    {medicine.name} (Stock: {medicine.quantity})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <CardContent className="space-y-4">
+  {/* Customer details moved up */}
+  <div>
+    <Label>Customer Name (Optional)</Label>
+    <Input
+      value={customerName}
+      onChange={(e) => setCustomerName(e.target.value)}
+      placeholder="Enter customer name"
+    />
+  </div>
+  <div>
+    <Label>Customer Phone (Optional)</Label>
+    <Input
+      value={customerPhone}
+      onChange={(e) => setCustomerPhone(e.target.value)}
+      placeholder="e.g., 0712345678"
+    />
+  </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label>Quantity</Label>
-              <Input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Enter quantity"
-              />
-            </div>
-            <div>
-              <Label>Unit Price (KES)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={unitPrice}
-                onChange={(e) => setUnitPrice(e.target.value)}
-                placeholder="Enter price"
-              />
-            </div>
-          </div>
+  {/* Product section */}
+  <div>
+    <Label>Product</Label>
+    <Select value={selectedMedicine} onValueChange={handleMedicineSelect}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select medicine" />
+      </SelectTrigger>
+      <SelectContent>
+        {medicines.map(medicine => (
+          <SelectItem key={medicine.id} value={medicine.id}>
+            {medicine.name} (Stock: {medicine.quantity})
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
 
-          {quantity && unitPrice && parseFloat(unitPrice) > 0 && parseInt(quantity) > 0 && (
-            <div className="p-4 bg-muted rounded-lg">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Subtotal:</span>
-                <span className="text-lg font-bold">
-                  KES {(parseFloat(unitPrice) * parseInt(quantity)).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          )}
+  {/* Quantity & Price */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <Label>Quantity</Label>
+      <Input
+        type="number"
+        min="1"
+        value={quantity}
+        onChange={(e) => setQuantity(e.target.value)}
+        placeholder="Enter quantity"
+      />
+    </div>
+    <div>
+      <Label>Unit Price (KES)</Label>
+      <Input
+        type="number"
+        min="0"
+        step="0.01"
+        value={unitPrice}
+        onChange={(e) => setUnitPrice(e.target.value)}
+        placeholder="Enter price"
+      />
+    </div>
+  </div>
 
-          <Button onClick={addToCart} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Add to Cart
-          </Button>
+  {/* Subtotal */}
+  {quantity && unitPrice && parseFloat(unitPrice) > 0 && parseInt(quantity) > 0 && (
+    <div className="p-4 bg-muted rounded-lg">
+      <div className="flex justify-between items-center">
+        <span className="text-sm font-medium">Subtotal:</span>
+        <span className="text-lg font-bold">
+          KES {(parseFloat(unitPrice) * parseInt(quantity)).toFixed(2)}
+        </span>
+      </div>
+    </div>
+  )}
 
-          <div className="pt-4 border-t space-y-4">
-            <div>
-              <Label>Customer Name (Optional)</Label>
-              <Input
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Enter customer name"
-              />
-            </div>
-            <div>
-              <Label>Customer Phone (Optional)</Label>
-              <Input
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="e.g., 0712345678"
-              />
-            </div>
-            <div>
-              <Label>Payment Method</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="mpesa">M-Pesa</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
+  {/* Add to Cart */}
+  <Button onClick={addToCart} className="w-full">
+    <Plus className="w-4 h-4 mr-2" />
+    Add to Cart
+  </Button>
+
+  {/* Payment method stays below */}
+  <div className="pt-4 border-t space-y-4">
+    <div>
+      <Label>Payment Method</Label>
+      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="cash">Cash</SelectItem>
+          <SelectItem value="mpesa">M-Pesa</SelectItem>
+          <SelectItem value="card">Card</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+</CardContent>
+
       </Card>
 
       <Card>
