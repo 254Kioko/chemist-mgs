@@ -104,7 +104,6 @@ export default function Auth() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
             <div className="text-xs text-center text-muted-foreground mt-4">
-              <p> <strong>contact developer incase</strong> <strong>of any inquiry</strong></p>
             </div>
           </form>
         </CardContent>
