@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          admin_phone: string
+          created_at: string | null
+          id: string
+          low_stock_threshold: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_phone: string
+          created_at?: string | null
+          id?: string
+          low_stock_threshold?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_phone?: string
+          created_at?: string | null
+          id?: string
+          low_stock_threshold?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       medicines: {
         Row: {
           cost: number
