@@ -32,7 +32,7 @@ export function AddMedicineForm({ onMedicineAdded }: { onMedicineAdded: () => vo
 
       toast({
         title: 'Success',
-        description: 'Medicine added successfully',
+        description: 'Product added successfully',
       });
 
       setName('');
@@ -53,18 +53,18 @@ export function AddMedicineForm({ onMedicineAdded }: { onMedicineAdded: () => vo
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add New Medicine</CardTitle>
-        <CardDescription>Add medicine to inventory</CardDescription>
+        <CardTitle>Add New Products</CardTitle>
+        <CardDescription>Add products to inventory</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Medicine Name</Label>
+            <Label htmlFor="name">Product Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter medicine name"
+              placeholder="Enter product name"
               required
             />
           </div>
