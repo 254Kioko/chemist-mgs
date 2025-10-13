@@ -136,7 +136,7 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Medicine Inventory</CardTitle>
+        <CardTitle>Product Inventory</CardTitle>
         <CardDescription>
           {role === 'admin' ? 'Manage medicine inventory' : 'Update medicine quantities after sales'}
         </CardDescription>
@@ -149,7 +149,7 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Medicine Name</TableHead>
+                  <TableHead>Product Name</TableHead>
                   <TableHead>Cost</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
