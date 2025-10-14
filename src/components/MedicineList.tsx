@@ -46,18 +46,28 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
   useEffect(() => {
     fetchMedicines();
 
-    // 🔄 Real-time subscription to medicine changes
+    // 🔄 Real-time subscription with direct state patching
     const channel = supabase
       .channel('medicines-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'medicines',
-        },
-        () => {
-          fetchMedicines(); // reload stock whenever medicines table changes
+        { event: '*', schema: 'public', table: 'medicines' },
+        (payload) => {
+          setMedicines((prev) => {
+            let updated = [...prev];
+
+            if (payload.eventType === 'INSERT') {
+              updated.push(payload.new as Medicine);
+            } else if (payload.eventType === 'UPDATE') {
+              updated = updated.map((med) =>
+                med.id === payload.new.id ? (payload.new as Medicine) : med
+              );
+            } else if (payload.eventType === 'DELETE') {
+              updated = updated.filter((med) => med.id !== payload.old.id);
+            }
+
+            return updated;
+          });
         }
       )
       .subscribe();
@@ -93,7 +103,6 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
 
       setEditingId(null);
       setEditQuantity('');
-      fetchMedicines();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -118,8 +127,6 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
         title: 'Success',
         description: 'Medicine deleted successfully',
       });
-
-      fetchMedicines();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -214,9 +221,7 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
                             </>
                           )
                         ) : (
-                          <span className="text-muted-foreground text-sm">
-                            View only
-                          </span>
+                          <span className="text-muted-foreground text-sm">View only</span>
                         )}
                       </div>
                     </TableCell>
