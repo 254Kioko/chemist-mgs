@@ -46,7 +46,7 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
   useEffect(() => {
     fetchMedicines();
 
-    // Set up real-time subscription
+    // Real-time subscription
     const channel = supabase
       .channel('medicines-changes')
       .on(
@@ -138,7 +138,9 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
       <CardHeader>
         <CardTitle>Product Inventory</CardTitle>
         <CardDescription>
-          {role === 'admin' ? 'Manage medicine inventory' : 'Update medicine quantities after sales'}
+          {role === 'admin'
+            ? 'Manage medicine inventory'
+            : 'View-only access to medicine inventory'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -173,48 +175,50 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
                         medicine.quantity
                       )}
                     </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {editingId === medicine.id ? (
-                        <>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleSave(medicine.id)}
-                          >
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={handleCancel}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleEdit(medicine)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          {role === 'admin' && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleDelete(medicine.id, medicine.name)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {role === 'admin' ? (
+                          editingId === medicine.id ? (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleSave(medicine.id)}
+                              >
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={handleCancel}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleEdit(medicine)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleDelete(medicine.id, medicine.name)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )
+                        ) : (
+                          <span className="text-muted-foreground text-sm">View only</span>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>
