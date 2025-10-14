@@ -15,6 +15,14 @@ interface Sale {
   payment_method: string;
   customer_name: string | null;
   created_at: string;
+  sale_items?: SaleItem[];
+}
+
+interface SaleItem {
+  medicine_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
 }
 
 interface DailySales {
@@ -62,10 +70,18 @@ export const SalesReports = ({ role }: { role: string | null }) => {
       const monthStart = startOfMonth(today);
       const last7Days = subDays(today, 6);
 
-      // Fetch sales
+      // Fetch sales with sale_items
       const { data: salesData, error } = await supabase
         .from('sales')
-        .select('*')
+        .select(`
+          *,
+          sale_items (
+            medicine_name,
+            quantity,
+            unit_price,
+            total_price
+          )
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -130,10 +146,11 @@ export const SalesReports = ({ role }: { role: string | null }) => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Sale Number', 'Date', 'Amount', 'Payment Method', 'Customer'];
+    const headers = ['Sale Number', 'Date', 'Items', 'Amount', 'Payment Method', 'Customer'];
     const rows = sales.map(sale => [
       sale.sale_number,
       format(new Date(sale.created_at), 'yyyy-MM-dd HH:mm'),
+      sale.sale_items?.map(item => `${item.medicine_name} (×${item.quantity})`).join('; ') || 'N/A',
       sale.total_amount,
       sale.payment_method,
       sale.customer_name || 'N/A'
@@ -219,26 +236,32 @@ export const SalesReports = ({ role }: { role: string | null }) => {
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sale #</TableHead>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead>Customer</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sales.map((sale) => (
-                <TableRow key={sale.id}>
-                  <TableCell className="font-medium">{sale.sale_number}</TableCell>
-                  <TableCell>{format(new Date(sale.created_at), 'MMM dd, yyyy HH:mm')}</TableCell>
-                  <TableCell>KES {parseFloat(sale.total_amount.toString()).toFixed(2)}</TableCell>
-                  <TableCell className="capitalize">{sale.payment_method}</TableCell>
-                  <TableCell>{sale.customer_name || 'Walk-in'}</TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sale #</TableHead>
+                  <TableHead>Date & Time</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment</TableHead>
+                  <TableHead>Customer</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
+              </TableHeader>
+              <TableBody>
+                {sales.map((sale) => (
+                  <TableRow key={sale.id}>
+                    <TableCell className="font-medium">{sale.sale_number}</TableCell>
+                    <TableCell>{format(new Date(sale.created_at), 'MMM dd, yyyy HH:mm')}</TableCell>
+                    <TableCell>
+                      {sale.sale_items?.map(item => 
+                        `${item.medicine_name} (×${item.quantity})`
+                      ).join(', ') || 'N/A'}
+                    </TableCell>
+                    <TableCell>KES {parseFloat(sale.total_amount.toString()).toFixed(2)}</TableCell>
+                    <TableCell className="capitalize">{sale.payment_method}</TableCell>
+                    <TableCell>{sale.customer_name || 'Walk-in'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </div>
         </CardContent>
