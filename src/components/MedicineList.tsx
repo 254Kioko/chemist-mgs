@@ -46,7 +46,7 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
   useEffect(() => {
     fetchMedicines();
 
-    // Real-time subscription
+    // 🔄 Real-time subscription to medicine changes
     const channel = supabase
       .channel('medicines-changes')
       .on(
@@ -54,10 +54,10 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
         {
           event: '*',
           schema: 'public',
-          table: 'medicines'
+          table: 'medicines',
         },
         () => {
-          fetchMedicines();
+          fetchMedicines(); // reload stock whenever medicines table changes
         }
       )
       .subscribe();
@@ -214,7 +214,9 @@ export function MedicineList({ role, refreshTrigger }: { role: string; refreshTr
                             </>
                           )
                         ) : (
-                          <span className="text-muted-foreground text-sm">View only</span>
+                          <span className="text-muted-foreground text-sm">
+                            View only
+                          </span>
                         )}
                       </div>
                     </TableCell>
