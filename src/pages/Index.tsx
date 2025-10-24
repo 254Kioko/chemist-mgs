@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2, BarChart3 } from 'lucide-react';
 import { AddMedicineForm } from '@/components/AddMedicineForm';
 import { MedicineList } from '@/components/MedicineList';
+import { SupplierForm } from '@/components/SupplierForm';
+
 
 const Index = () => {
   const { user, role, loading, signOut } = useAuth();
