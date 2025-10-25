@@ -7,6 +7,8 @@ import { Loader2, BarChart3, Camera, ShoppingBag } from 'lucide-react';
 import { SalesReports } from '@/components/SalesReports';
 import { CCTVMonitor } from '@/components/CCTVMonitor';
 import { POSSystem } from '@/components/POSSystem';
+import { SupplierForm } from '@/components/SupplierForm';
+
 
 const Manager = () => {
   const { user, role, loading, signOut } = useAuth();
