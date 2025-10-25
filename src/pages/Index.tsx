@@ -2,16 +2,17 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Loader2, BarChart3 } from 'lucide-react';
+import { Loader2, BarChart3, Package, Users } from 'lucide-react';
 import { AddMedicineForm } from '@/components/AddMedicineForm';
 import { MedicineList } from '@/components/MedicineList';
 import { SupplierForm } from '@/components/SupplierForm';
-
+import { ProductForm } from '@/components/ProductForm'; // ✅ Add this
 
 const Index = () => {
   const { user, role, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState<'medicines' | 'suppliers' | 'products'>('medicines');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,6 +33,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold">Chemist Management System</h1>
@@ -49,13 +51,47 @@ const Index = () => {
             </Button>
           </div>
         </div>
-        
+
+        {/* Navigation Tabs */}
+        {role === 'admin' && (
+          <div className="flex gap-4 mb-6">
+            <Button
+              variant={activeTab === 'medicines' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('medicines')}
+            >
+              <Package className="w-4 h-4 mr-2" />
+              Medicines
+            </Button>
+            <Button
+              variant={activeTab === 'suppliers' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('suppliers')}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Suppliers
+            </Button>
+            <Button
+              variant={activeTab === 'products' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('products')}
+            >
+              <Package className="w-4 h-4 mr-2" />
+              Products
+            </Button>
+          </div>
+        )}
+
+        {/* Content Section */}
         <div className="grid gap-6">
-          {role === 'admin' && (
-            <AddMedicineForm onMedicineAdded={() => setRefreshTrigger(prev => prev + 1)} />
+          {activeTab === 'medicines' && (
+            <>
+              {role === 'admin' && (
+                <AddMedicineForm onMedicineAdded={() => setRefreshTrigger((prev) => prev + 1)} />
+              )}
+              <MedicineList role={role} refreshTrigger={refreshTrigger} />
+            </>
           )}
-          
-          <MedicineList role={role} refreshTrigger={refreshTrigger} />
+
+          {activeTab === 'suppliers' && <SupplierForm />}
+          {activeTab === 'products' && <ProductForm />}
         </div>
       </div>
     </div>
