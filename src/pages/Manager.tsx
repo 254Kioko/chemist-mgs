@@ -7,8 +7,9 @@ import { Loader2, BarChart3, Camera, ShoppingBag, Package, Truck } from 'lucide-
 import { SalesReports } from '@/components/SalesReports';
 import { CCTVMonitor } from '@/components/CCTVMonitor';
 import { POSSystem } from '@/components/POSSystem';
-import { SupplierForm } from '@/components/SupplierForm';
-import { ProductForm } from '@/components/ProductForm';
+import SupplierForm from '@/components/SupplierForm';
+import ProductForm from '@/components/ProductForm';
+
 
 const Manager = () => {
   const { user, role, loading, signOut } = useAuth();
