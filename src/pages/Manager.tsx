@@ -45,6 +45,12 @@ const Manager = () => {
               <Button onClick={() => navigate('/')} variant="outline" className="flex-1 sm:flex-none">
                 Back to Inventory
               </Button>
+               <Button onClick={() => navigate('/supplierform')} variant="outline" className="flex-1 sm:flex-none">
+                Supplier Info
+              </Button>
+                <Button onClick={() => navigate('/productform')} variant="outline" className="flex-1 sm:flex-none">
+                Products Supplied
+              </Button>
               <Button onClick={signOut} variant="outline" className="flex-1 sm:flex-none">
                 Sign Out
               </Button>
