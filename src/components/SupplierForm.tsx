@@ -174,4 +174,3 @@ export default function SupplierForm() {
     </Card>
   );
 }
-import SupplierForm from '@/components/SupplierForm';
