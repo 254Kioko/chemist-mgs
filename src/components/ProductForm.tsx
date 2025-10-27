@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client"; // ✅ Supabase client
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -22,9 +22,11 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ✅ Validation schema
 const productSchema = z.object({
+  supplierId: z.string().min(1, "Please select a supplier"),
   productName: z
     .string()
     .min(2, "Product name must be at least 2 characters")
@@ -46,12 +48,19 @@ const productSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
+interface Supplier {
+  id: string;
+  supplier_name: string;
+}
+
 export default function ProductForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
+      supplierId: "",
       productName: "",
       batchNumber: "",
       quantity: 0,
@@ -59,13 +68,33 @@ export default function ProductForm() {
     },
   });
 
-  // ✅ Handle form submission and Supabase insert
+  // ✅ Fetch suppliers from Supabase
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, supplier_name")
+        .order("supplier_name", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching suppliers:", error.message);
+        toast.error("Failed to load suppliers");
+      } else {
+        setSuppliers(data || []);
+      }
+    };
+
+    fetchSuppliers();
+  }, []);
+
+  // ✅ Handle form submission
   const onSubmit = async (data: ProductFormValues) => {
     setIsSubmitting(true);
 
     try {
       const { error } = await supabase.from("products").insert([
         {
+          supplier_id: data.supplierId, // ✅ Link to supplier
           product_name: data.productName,
           batch_number: data.batchNumber,
           quantity: data.quantity,
@@ -75,12 +104,12 @@ export default function ProductForm() {
 
       if (error) throw error;
 
-      toast.success("Product added successfully!");
+      toast.success("✅ Product added successfully!");
       form.reset();
     } catch (error: any) {
       console.error("Insert failed:", error.message);
       toast.error(
-        "❌ Failed to add product. Check table fields or row-level security (RLS) policies."
+        "❌ Failed to add product. Check table fields or RLS policies."
       );
     } finally {
       setIsSubmitting(false);
@@ -97,7 +126,7 @@ export default function ProductForm() {
           <div>
             <CardTitle className="text-2xl">Product Inventory</CardTitle>
             <CardDescription>
-              Add new product with batch and expiry details
+              Add new product with supplier and expiry details
             </CardDescription>
           </div>
         </div>
@@ -107,7 +136,43 @@ export default function ProductForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Product Name */}
+              {/* ✅ Supplier Dropdown */}
+              <FormField
+                control={form.control}
+                name="supplierId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supplier</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={suppliers.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              suppliers.length === 0
+                                ? "Loading suppliers..."
+                                : "Select supplier"
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.supplier_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* ✅ Product Name */}
               <FormField
                 control={form.control}
                 name="productName"
@@ -122,7 +187,7 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Batch Number */}
+              {/* ✅ Batch Number */}
               <FormField
                 control={form.control}
                 name="batchNumber"
@@ -137,7 +202,7 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Quantity */}
+              {/* ✅ Quantity */}
               <FormField
                 control={form.control}
                 name="quantity"
@@ -157,7 +222,7 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Expiry Date */}
+              {/* ✅ Expiry Date */}
               <FormField
                 control={form.control}
                 name="expiryDate"
