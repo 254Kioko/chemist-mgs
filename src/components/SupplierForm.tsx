@@ -1,10 +1,8 @@
-// src/components/SupplierForm.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client"; // ✅ use the same working client
-
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -39,8 +37,19 @@ const supplierSchema = z.object({
 
 type SupplierFormValues = z.infer<typeof supplierSchema>;
 
+interface Supplier {
+  id: string;
+  supplier_name: string;
+  contact_person: string;
+  email: string;
+  phone: string;
+  distribution_company: string;
+  address: string;
+}
+
 export default function SupplierForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierSchema),
@@ -54,6 +63,26 @@ export default function SupplierForm() {
     },
   });
 
+  // ✅ Fetch suppliers from Supabase
+  const fetchSuppliers = async () => {
+    const { data, error } = await supabase
+      .from("suppliers")
+      .select("*")
+      .order("supplier_name", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching suppliers:", error.message);
+      toast.error("Failed to load suppliers");
+    } else {
+      setSuppliers(data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
+  // ✅ Submit handler
   const onSubmit = async (data: SupplierFormValues) => {
     setIsSubmitting(true);
 
@@ -71,8 +100,9 @@ export default function SupplierForm() {
 
       if (error) throw error;
 
-      toast.success(" Supplier added successfully!");
+      toast.success("✅ Supplier added successfully!");
       form.reset();
+      fetchSuppliers(); // refresh supplier list
     } catch (error: any) {
       console.error("Insert failed:", error.message);
       toast.error("❌ Failed to add supplier. Check permissions or table fields.");
@@ -96,7 +126,9 @@ export default function SupplierForm() {
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="pt-6">
+        {/* ✅ Supplier Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -140,6 +172,41 @@ export default function SupplierForm() {
             </div>
           </form>
         </Form>
+
+        {/* ✅ Supplier List Table */}
+        <div className="mt-10">
+          <h3 className="text-xl font-semibold mb-4">Suppliers List</h3>
+          {suppliers.length === 0 ? (
+            <p className="text-muted-foreground">No suppliers added yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-border rounded-lg">
+                <thead className="bg-accent/10">
+                  <tr>
+                    <th className="p-3 text-left">Supplier Name</th>
+                    <th className="p-3 text-left">Distribution Company</th>
+                    <th className="p-3 text-left">Contact Person</th>
+                    <th className="p-3 text-left">Email</th>
+                    <th className="p-3 text-left">Phone</th>
+                    <th className="p-3 text-left">Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {suppliers.map((s) => (
+                    <tr key={s.id} className="border-t hover:bg-accent/5">
+                      <td className="p-3">{s.supplier_name}</td>
+                      <td className="p-3">{s.distribution_company}</td>
+                      <td className="p-3">{s.contact_person}</td>
+                      <td className="p-3">{s.email}</td>
+                      <td className="p-3">{s.phone}</td>
+                      <td className="p-3">{s.address}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
