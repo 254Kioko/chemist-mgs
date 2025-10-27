@@ -71,7 +71,7 @@ export default function SupplierForm() {
 
       if (error) throw error;
 
-      toast.success("✅ Supplier added successfully!");
+      toast.success(" Supplier added successfully!");
       form.reset();
     } catch (error: any) {
       console.error("Insert failed:", error.message);
