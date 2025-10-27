@@ -36,6 +36,7 @@ const productSchema = z.object({
   productName: z.string().min(2, "Product name must be at least 2 characters").max(100),
   batchNumber: z.string().min(3, "Batch number must be at least 3 characters").max(50),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  costPerUnit: z.coerce.number().min(0.01, "Cost per unit must be greater than 0"),
   expiryDate: z.string().refine((date) => {
     const selectedDate = new Date(date);
     const today = new Date();
@@ -44,7 +45,9 @@ const productSchema = z.object({
   }, "Expiry date must be in the future"),
 });
 
-type ProductFormValues = z.infer<typeof productSchema>;
+type ProductFormValues = z.infer<typeof productSchema> & {
+  totalCost?: number;
+};
 
 interface Supplier {
   id: string;
@@ -56,6 +59,8 @@ interface Product {
   product_name: string;
   batch_number: string;
   quantity: number;
+  cost_per_unit: number;
+  total_cost: number;
   expiry_date: string;
   suppliers: {
     supplier_name: string;
@@ -74,7 +79,9 @@ export default function ProductForm() {
       productName: "",
       batchNumber: "",
       quantity: 0,
+      costPerUnit: 0,
       expiryDate: "",
+      totalCost: 0,
     },
   });
 
@@ -106,6 +113,8 @@ export default function ProductForm() {
         product_name,
         batch_number,
         quantity,
+        cost_per_unit,
+        total_cost,
         expiry_date,
         suppliers (supplier_name)
       `)
@@ -134,13 +143,14 @@ export default function ProductForm() {
           product_name: data.productName,
           batch_number: data.batchNumber,
           quantity: data.quantity,
+          cost_per_unit: data.costPerUnit,
           expiry_date: data.expiryDate,
         },
       ]);
 
       if (error) throw error;
 
-      toast.success(" Product added successfully!");
+      toast.success("✅ Product added successfully!");
       form.reset();
       fetchProducts(); // refresh table immediately
     } catch (error: any) {
@@ -150,6 +160,9 @@ export default function ProductForm() {
       setIsSubmitting(false);
     }
   };
+
+  // ✅ Auto-update total cost when quantity or cost changes
+  const totalCost = form.watch("quantity") * form.watch("costPerUnit");
 
   return (
     <Card className="shadow-lg border-border">
@@ -161,7 +174,7 @@ export default function ProductForm() {
           <div>
             <CardTitle className="text-2xl">Product Inventory</CardTitle>
             <CardDescription>
-              Add new product with supplier and expiry details
+              Add new product with supplier, cost, and expiry details
             </CardDescription>
           </div>
         </div>
@@ -250,12 +263,45 @@ export default function ProductForm() {
                         min="1"
                         placeholder="Enter quantity"
                         {...field}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value || "0");
+                          field.onChange(val);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {/* Cost per Unit */}
+              <FormField
+                control={form.control}
+                name="costPerUnit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cost per Unit (KSh)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Enter cost per unit"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Total Cost */}
+              <FormItem>
+                <FormLabel>Total Cost (KSh)</FormLabel>
+                <FormControl>
+                  <Input type="number" readOnly value={totalCost.toFixed(2)} />
+                </FormControl>
+              </FormItem>
 
               {/* Expiry Date */}
               <FormField
@@ -299,6 +345,8 @@ export default function ProductForm() {
                     <th className="p-3 text-left">Product Name</th>
                     <th className="p-3 text-left">Batch Number</th>
                     <th className="p-3 text-left">Quantity</th>
+                    <th className="p-3 text-left">Cost/Unit (KSh)</th>
+                    <th className="p-3 text-left">Total Cost (KSh)</th>
                     <th className="p-3 text-left">Expiry Date</th>
                   </tr>
                 </thead>
@@ -311,6 +359,8 @@ export default function ProductForm() {
                       <td className="p-3">{product.product_name}</td>
                       <td className="p-3">{product.batch_number}</td>
                       <td className="p-3">{product.quantity}</td>
+                      <td className="p-3">{product.cost_per_unit?.toFixed(2)}</td>
+                      <td className="p-3">{product.total_cost?.toFixed(2)}</td>
                       <td className="p-3">
                         {new Date(product.expiry_date).toLocaleDateString()}
                       </td>
