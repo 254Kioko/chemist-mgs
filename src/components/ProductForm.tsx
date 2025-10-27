@@ -140,7 +140,7 @@ export default function ProductForm() {
 
       if (error) throw error;
 
-      toast.success("✅ Product added successfully!");
+      toast.success(" Product added successfully!");
       form.reset();
       fetchProducts(); // refresh table immediately
     } catch (error: any) {
