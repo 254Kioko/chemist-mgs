@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client"; // ✅ use the same working client
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,17 +24,6 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-
-// ✅ Safe environment variable check
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
-
-// Prevent crash if env vars are missing
-const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
 
 // ✅ Validation schema
 const supplierSchema = z.object({
@@ -66,11 +55,6 @@ export default function SupplierForm() {
   });
 
   const onSubmit = async (data: SupplierFormValues) => {
-    if (!supabase) {
-      toast.error("Supabase not configured. Check your .env file.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -90,8 +74,8 @@ export default function SupplierForm() {
       toast.success("✅ Supplier added successfully!");
       form.reset();
     } catch (error: any) {
-      console.error(error);
-      toast.error("❌ Failed to add supplier. Please try again.");
+      console.error("Insert failed:", error.message);
+      toast.error("❌ Failed to add supplier. Check permissions or table fields.");
     } finally {
       setIsSubmitting(false);
     }
@@ -116,88 +100,41 @@ export default function SupplierForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="supplierName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supplier Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter supplier name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="distributionCompany"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Distribution Company</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter distribution company" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="contactPerson"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Person</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter contact person" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="supplier@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+1234567890" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {[
+                { name: "supplierName", label: "Supplier Name", placeholder: "Enter supplier name" },
+                { name: "distributionCompany", label: "Distribution Company", placeholder: "Enter distribution company" },
+                { name: "contactPerson", label: "Contact Person", placeholder: "Enter contact person" },
+                { name: "email", label: "Email Address", placeholder: "supplier@example.com", type: "email" },
+                { name: "phone", label: "Phone Number", placeholder: "+254..." },
+                { name: "address", label: "Address", placeholder: "Enter address" },
+              ].map((field) => (
+                <FormField
+                  key={field.name}
+                  control={form.control}
+                  name={field.name as keyof SupplierFormValues}
+                  render={({ field: f }) => (
+                    <FormItem>
+                      <FormLabel>{field.label}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type={field.type || "text"}
+                          placeholder={field.placeholder}
+                          {...f}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="min-w-[150px]"
+              >
                 {isSubmitting ? "Adding..." : "Add Supplier"}
               </Button>
             </div>
