@@ -1,4 +1,3 @@
-// src/components/SupplierForm.tsx
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,16 +12,38 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 
+// ✅ Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// ✅ Zod schema for validation
 const supplierSchema = z.object({
-  supplierName: z.string().min(2, "Supplier name must be at least 2 characters").max(100),
-  contactPerson: z.string().min(2, "Contact person must be at least 2 characters").max(100),
+  supplierName: z
+    .string()
+    .min(2, "Supplier name must be at least 2 characters")
+    .max(100),
+  contactPerson: z
+    .string()
+    .min(2, "Contact person must be at least 2 characters")
+    .max(100),
   email: z.string().email("Invalid email address").max(255),
   phone: z.string().min(10, "Phone number must be at least 10 characters").max(20),
-  distributionCompany: z.string().min(2, "Distribution company must be at least 2 characters").max(100),
+  distributionCompany: z
+    .string()
+    .min(2, "Distribution company must be at least 2 characters")
+    .max(100),
   address: z.string().min(5, "Address must be at least 5 characters").max(200),
 });
 
@@ -45,13 +66,27 @@ export default function SupplierForm() {
 
   const onSubmit = async (data: SupplierFormValues) => {
     setIsSubmitting(true);
+
     try {
-      // TODO: Connect to your Supabase database
-      console.log("Supplier data:", data);
-      toast.success("Supplier added successfully!");
+      // ✅ Insert into Supabase
+      const { error } = await supabase.from("suppliers").insert([
+        {
+          supplier_name: data.supplierName,
+          contact_person: data.contactPerson,
+          email: data.email,
+          phone: data.phone,
+          distribution_company: data.distributionCompany,
+          address: data.address,
+        },
+      ]);
+
+      if (error) throw error;
+
+      toast.success("✅ Supplier added successfully!");
       form.reset();
-    } catch (error) {
-      toast.error("Failed to add supplier. Please try again.");
+    } catch (error: any) {
+      console.error("Insert error:", error.message);
+      toast.error(`❌ Failed to add supplier: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -66,7 +101,9 @@ export default function SupplierForm() {
           </div>
           <div>
             <CardTitle className="text-2xl">Supplier Information</CardTitle>
-            <CardDescription>Add new supplier and distribution company details</CardDescription>
+            <CardDescription>
+              Add new supplier and distribution company details
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -87,7 +124,6 @@ export default function SupplierForm() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="distributionCompany"
@@ -101,7 +137,6 @@ export default function SupplierForm() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="contactPerson"
@@ -115,7 +150,6 @@ export default function SupplierForm() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="email"
@@ -129,7 +163,6 @@ export default function SupplierForm() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="phone"
@@ -143,7 +176,6 @@ export default function SupplierForm() {
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="address"
@@ -160,11 +192,7 @@ export default function SupplierForm() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="min-w-[150px]"
-              >
+              <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
                 {isSubmitting ? "Adding..." : "Add Supplier"}
               </Button>
             </div>
