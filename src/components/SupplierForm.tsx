@@ -21,9 +21,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Building2 } from "lucide-react";
+import { Building2, Trash2, Pencil, Save, X } from "lucide-react";
 
-// ✅ Validation schema
 const supplierSchema = z.object({
   supplierName: z.string().min(2, "Supplier name must be at least 2 characters"),
   contactPerson: z.string().min(2, "Contact person must be at least 2 characters"),
@@ -50,6 +49,8 @@ interface Supplier {
 export default function SupplierForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<Partial<Supplier>>({});
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierSchema),
@@ -63,7 +64,6 @@ export default function SupplierForm() {
     },
   });
 
-  // ✅ Fetch suppliers from Supabase
   const fetchSuppliers = async () => {
     const { data, error } = await supabase
       .from("suppliers")
@@ -82,10 +82,8 @@ export default function SupplierForm() {
     fetchSuppliers();
   }, []);
 
-  // ✅ Submit handler
   const onSubmit = async (data: SupplierFormValues) => {
     setIsSubmitting(true);
-
     try {
       const { error } = await supabase.from("suppliers").insert([
         {
@@ -97,17 +95,66 @@ export default function SupplierForm() {
           address: data.address,
         },
       ]);
-
       if (error) throw error;
-
-      toast.success(" Supplier added successfully!");
+      toast.success("✅ Supplier added successfully!");
       form.reset();
-      fetchSuppliers(); // refresh supplier list
+      fetchSuppliers();
     } catch (error: any) {
       console.error("Insert failed:", error.message);
-      toast.error("❌ Failed to add supplier. Check permissions or table fields.");
+      toast.error("❌ Failed to add supplier.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // ✅ Handle Edit Click
+  const handleEditClick = (supplier: Supplier) => {
+    setEditingId(supplier.id);
+    setEditData(supplier);
+  };
+
+  // ✅ Handle Cancel Edit
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditData({});
+  };
+
+  // ✅ Handle Save Edit
+  const handleSaveEdit = async () => {
+    if (!editingId) return;
+    try {
+      const { error } = await supabase
+        .from("suppliers")
+        .update({
+          supplier_name: editData.supplier_name,
+          contact_person: editData.contact_person,
+          email: editData.email,
+          phone: editData.phone,
+          distribution_company: editData.distribution_company,
+          address: editData.address,
+        })
+        .eq("id", editingId);
+
+      if (error) throw error;
+      toast.success("✅ Supplier updated successfully!");
+      setEditingId(null);
+      setEditData({});
+      fetchSuppliers();
+    } catch (error: any) {
+      toast.error("❌ Failed to update supplier.");
+    }
+  };
+
+  // ✅ Handle Delete
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this supplier?")) return;
+    try {
+      const { error } = await supabase.from("suppliers").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("🗑️ Supplier deleted successfully!");
+      fetchSuppliers();
+    } catch (error: any) {
+      toast.error("❌ Failed to delete supplier.");
     }
   };
 
@@ -121,7 +168,7 @@ export default function SupplierForm() {
           <div>
             <CardTitle className="text-2xl">Supplier Information</CardTitle>
             <CardDescription>
-              Add new supplier and distribution company details
+              Add, edit, or delete supplier and distribution details
             </CardDescription>
           </div>
         </div>
@@ -162,11 +209,7 @@ export default function SupplierForm() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="min-w-[150px]"
-              >
+              <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
                 {isSubmitting ? "Adding..." : "Add Supplier"}
               </Button>
             </div>
@@ -189,17 +232,66 @@ export default function SupplierForm() {
                     <th className="p-3 text-left">Email</th>
                     <th className="p-3 text-left">Phone</th>
                     <th className="p-3 text-left">Address</th>
+                    <th className="p-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {suppliers.map((s) => (
                     <tr key={s.id} className="border-t hover:bg-accent/5">
-                      <td className="p-3">{s.supplier_name}</td>
-                      <td className="p-3">{s.distribution_company}</td>
-                      <td className="p-3">{s.contact_person}</td>
-                      <td className="p-3">{s.email}</td>
-                      <td className="p-3">{s.phone}</td>
-                      <td className="p-3">{s.address}</td>
+                      {editingId === s.id ? (
+                        <>
+                          {[
+                            "supplier_name",
+                            "distribution_company",
+                            "contact_person",
+                            "email",
+                            "phone",
+                            "address",
+                          ].map((key) => (
+                            <td key={key} className="p-2">
+                              <Input
+                                value={(editData as any)[key] || ""}
+                                onChange={(e) =>
+                                  setEditData({ ...editData, [key]: e.target.value })
+                                }
+                              />
+                            </td>
+                          ))}
+                          <td className="p-2 flex gap-2 justify-center">
+                            <Button size="sm" onClick={handleSaveEdit}>
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="p-3">{s.supplier_name}</td>
+                          <td className="p-3">{s.distribution_company}</td>
+                          <td className="p-3">{s.contact_person}</td>
+                          <td className="p-3">{s.email}</td>
+                          <td className="p-3">{s.phone}</td>
+                          <td className="p-3">{s.address}</td>
+                          <td className="p-3 flex gap-2 justify-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditClick(s)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(s.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
