@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client"; // ✅ Supabase client
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,20 +13,35 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
 
+// ✅ Validation schema
 const productSchema = z.object({
-  productName: z.string().min(2, "Product name must be at least 2 characters").max(100),
-  batchNumber: z.string().min(3, "Batch number must be at least 3 characters").max(50),
+  productName: z
+    .string()
+    .min(2, "Product name must be at least 2 characters")
+    .max(100),
+  batchNumber: z
+    .string()
+    .min(3, "Batch number must be at least 3 characters")
+    .max(50),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-  expiryDate: z.string().refine((date) => {
-    const selectedDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return selectedDate > today;
-  }, "Expiry date must be in the future"),
+  expiryDate: z
+    .string()
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return selectedDate > today;
+    }, "Expiry date must be in the future"),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -43,15 +59,29 @@ export default function ProductForm() {
     },
   });
 
+  // ✅ Handle form submission and Supabase insert
   const onSubmit = async (data: ProductFormValues) => {
     setIsSubmitting(true);
+
     try {
-      // TODO: Connect to Lovable Cloud database
-      console.log("Product data:", data);
-      toast.success("Product added successfully!");
+      const { error } = await supabase.from("products").insert([
+        {
+          product_name: data.productName,
+          batch_number: data.batchNumber,
+          quantity: data.quantity,
+          expiry_date: data.expiryDate,
+        },
+      ]);
+
+      if (error) throw error;
+
+      toast.success("✅ Product added successfully!");
       form.reset();
-    } catch (error) {
-      toast.error("Failed to add product. Please try again.");
+    } catch (error: any) {
+      console.error("Insert failed:", error.message);
+      toast.error(
+        "❌ Failed to add product. Check table fields or row-level security (RLS) policies."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -66,14 +96,18 @@ export default function ProductForm() {
           </div>
           <div>
             <CardTitle className="text-2xl">Product Inventory</CardTitle>
-            <CardDescription>Add new product with batch and expiry details</CardDescription>
+            <CardDescription>
+              Add new product with batch and expiry details
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Product Name */}
               <FormField
                 control={form.control}
                 name="productName"
@@ -88,6 +122,7 @@ export default function ProductForm() {
                 )}
               />
 
+              {/* Batch Number */}
               <FormField
                 control={form.control}
                 name="batchNumber"
@@ -102,6 +137,7 @@ export default function ProductForm() {
                 )}
               />
 
+              {/* Quantity */}
               <FormField
                 control={form.control}
                 name="quantity"
@@ -109,11 +145,11 @@ export default function ProductForm() {
                   <FormItem>
                     <FormLabel>Quantity</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        placeholder="Enter quantity" 
-                        {...field} 
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="Enter quantity"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -121,6 +157,7 @@ export default function ProductForm() {
                 )}
               />
 
+              {/* Expiry Date */}
               <FormField
                 control={form.control}
                 name="expiryDate"
@@ -128,10 +165,7 @@ export default function ProductForm() {
                   <FormItem>
                     <FormLabel>Expiry Date</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field} 
-                      />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -140,11 +174,10 @@ export default function ProductForm() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isSubmitting}
                 className="min-w-[150px]"
-                variant="default"
               >
                 {isSubmitting ? "Adding..." : "Add Product"}
               </Button>
