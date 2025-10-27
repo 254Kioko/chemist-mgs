@@ -1,3 +1,4 @@
+// src/components/SupplierForm.tsx
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,28 +24,26 @@ import { toast } from "sonner";
 import { Building2 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
-// ✅ Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// ✅ Safe environment variable check
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
-// ✅ Zod schema for validation
+// Prevent crash if env vars are missing
+const supabase =
+  supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;
+
+// ✅ Validation schema
 const supplierSchema = z.object({
-  supplierName: z
-    .string()
-    .min(2, "Supplier name must be at least 2 characters")
-    .max(100),
-  contactPerson: z
-    .string()
-    .min(2, "Contact person must be at least 2 characters")
-    .max(100),
-  email: z.string().email("Invalid email address").max(255),
-  phone: z.string().min(10, "Phone number must be at least 10 characters").max(20),
+  supplierName: z.string().min(2, "Supplier name must be at least 2 characters"),
+  contactPerson: z.string().min(2, "Contact person must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone number must be at least 10 characters"),
   distributionCompany: z
     .string()
-    .min(2, "Distribution company must be at least 2 characters")
-    .max(100),
-  address: z.string().min(5, "Address must be at least 5 characters").max(200),
+    .min(2, "Distribution company must be at least 2 characters"),
+  address: z.string().min(5, "Address must be at least 5 characters"),
 });
 
 type SupplierFormValues = z.infer<typeof supplierSchema>;
@@ -65,10 +64,14 @@ export default function SupplierForm() {
   });
 
   const onSubmit = async (data: SupplierFormValues) => {
+    if (!supabase) {
+      toast.error("Supabase not configured. Check your .env file.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // ✅ Insert into Supabase
       const { error } = await supabase.from("suppliers").insert([
         {
           supplier_name: data.supplierName,
@@ -85,8 +88,8 @@ export default function SupplierForm() {
       toast.success("✅ Supplier added successfully!");
       form.reset();
     } catch (error: any) {
-      console.error("Insert error:", error.message);
-      toast.error(`❌ Failed to add supplier: ${error.message}`);
+      console.error(error);
+      toast.error("❌ Failed to add supplier. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +147,7 @@ export default function SupplierForm() {
                   <FormItem>
                     <FormLabel>Contact Person</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter contact person name" {...field} />
+                      <Input placeholder="Enter contact person" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -183,7 +186,7 @@ export default function SupplierForm() {
                   <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter complete address" {...field} />
+                      <Input placeholder="Enter address" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
