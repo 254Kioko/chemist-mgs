@@ -10,20 +10,20 @@ import {
   ShoppingBag,
   Package,
   Truck,
+  Lock,
 } from "lucide-react";
 import { SalesReports } from "@/components/SalesReports";
 import { CCTVMonitor } from "@/components/CCTVMonitor";
 import { POSSystem } from "@/components/POSSystem";
 import SupplierForm from "@/components/SupplierForm";
 import ProductForm from "@/components/ProductForm";
-import { toast } from "sonner";
 
 const Manager = () => {
   const { user, role, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("sales");
 
-  // === Redirect unauthenticated users ===
+  // Redirect unauthenticated users
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
@@ -40,20 +40,11 @@ const Manager = () => {
 
   if (!user) return null;
 
-  // === Restricted Tabs for Cashiers ===
+  // Tabs restricted for cashiers
   const restrictedTabs = ["cctv", "supplier", "products"];
 
   const handleTabChange = (tab: string) => {
-    if (role === "cashier" && restrictedTabs.includes(tab)) {
-      toast.error("🚫 Access denied: Only managers or admins can access this section.", {
-        style: {
-          background: "#DC2626", // red background
-          color: "white",
-          fontWeight: "600",
-        },
-      });
-      return; // Prevent switching
-    }
+    if (role === "cashier" && restrictedTabs.includes(tab)) return;
     setActiveTab(tab);
   };
 
@@ -93,56 +84,79 @@ const Manager = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 max-w-3xl">
+            {/* SALES TAB */}
             <TabsTrigger value="sales" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Sales
             </TabsTrigger>
+
+            {/* POS TAB */}
             <TabsTrigger value="pos" className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" />
               POS
             </TabsTrigger>
-            <TabsTrigger value="cctv" className="flex items-center gap-2">
+
+            {/* CCTV TAB (Disabled for Cashiers) */}
+            <button
+              disabled={role === "cashier"}
+              onClick={() => handleTabChange("cctv")}
+              className={`flex items-center gap-2 justify-center rounded-md px-3 py-1.5 text-sm font-medium transition
+                ${
+                  role === "cashier"
+                    ? "bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
+            >
               <Camera className="w-4 h-4" />
-              CCTV
-            </TabsTrigger>
-            <TabsTrigger value="supplier" className="flex items-center gap-2">
+              CCTV {role === "cashier" && <Lock className="w-3 h-3 text-muted-foreground" />}
+            </button>
+
+            {/* SUPPLIER TAB (Disabled for Cashiers) */}
+            <button
+              disabled={role === "cashier"}
+              onClick={() => handleTabChange("supplier")}
+              className={`flex items-center gap-2 justify-center rounded-md px-3 py-1.5 text-sm font-medium transition
+                ${
+                  role === "cashier"
+                    ? "bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
+            >
               <Truck className="w-4 h-4" />
-              Suppliers
-            </TabsTrigger>
-            <TabsTrigger value="products" className="flex items-center gap-2">
+              Suppliers {role === "cashier" && <Lock className="w-3 h-3 text-muted-foreground" />}
+            </button>
+
+            {/* PRODUCTS TAB (Disabled for Cashiers) */}
+            <button
+              disabled={role === "cashier"}
+              onClick={() => handleTabChange("products")}
+              className={`flex items-center gap-2 justify-center rounded-md px-3 py-1.5 text-sm font-medium transition
+                ${
+                  role === "cashier"
+                    ? "bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
+            >
               <Package className="w-4 h-4" />
-              Products
-            </TabsTrigger>
+              Products {role === "cashier" && <Lock className="w-3 h-3 text-muted-foreground" />}
+            </button>
           </TabsList>
 
-          {/* === SALES TAB === */}
+          {/* === TAB CONTENT === */}
           <TabsContent value="sales">
             <SalesReports role={role} />
           </TabsContent>
 
-          {/* === POS TAB === */}
           <TabsContent value="pos">
             <POSSystem />
           </TabsContent>
 
-          {/* === CCTV TAB === */}
           <TabsContent value="cctv">
-            {role === "cashier" ? (
-              <div className="text-red-500 font-semibold text-center mt-10">
-                🚫 Access Denied — Managers or Admins Only
-              </div>
-            ) : (
-              <CCTVMonitor />
-            )}
+            {role !== "cashier" && <CCTVMonitor />}
           </TabsContent>
 
-          {/* === SUPPLIERS TAB === */}
           <TabsContent value="supplier">
-            {role === "cashier" ? (
-              <div className="text-red-500 font-semibold text-center mt-10">
-                🚫 Access Denied — Managers or Admins Only
-              </div>
-            ) : (
+            {role !== "cashier" && (
               <div className="bg-card p-6 rounded-xl shadow-sm">
                 <h2 className="text-2xl font-semibold mb-4">Supplier Information</h2>
                 <SupplierForm />
@@ -150,13 +164,8 @@ const Manager = () => {
             )}
           </TabsContent>
 
-          {/* === PRODUCTS TAB === */}
           <TabsContent value="products">
-            {role === "cashier" ? (
-              <div className="text-red-500 font-semibold text-center mt-10">
-                🚫 Access Denied — Managers or Admins Only
-              </div>
-            ) : (
+            {role !== "cashier" && (
               <div className="bg-card p-6 rounded-xl shadow-sm">
                 <h2 className="text-2xl font-semibold mb-4">Products Supplied</h2>
                 <ProductForm />
