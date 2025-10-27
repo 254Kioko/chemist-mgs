@@ -123,7 +123,7 @@ const Manager = () => {
                 }`}
             >
               <Truck className="w-4 h-4" />
-              Suppliers {role === "cashier" && <Lock className="w-3 h-3 text-muted-foreground" />}
+              Suppliers' Info {role === "cashier" && <Lock className="w-3 h-3 text-muted-foreground" />}
             </button>
 
             {/* PRODUCTS TAB (Disabled for Cashiers) */}
@@ -138,7 +138,7 @@ const Manager = () => {
                 }`}
             >
               <Package className="w-4 h-4" />
-              Products {role === "cashier" && <Lock className="w-3 h-3 text-muted-foreground" />}
+              Products Supplied {role === "cashier" && <Lock className="w-3 h-3 text-muted-foreground" />}
             </button>
           </TabsList>
 
