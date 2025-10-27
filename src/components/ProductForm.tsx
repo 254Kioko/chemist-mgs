@@ -114,7 +114,7 @@ export default function ProductForm() {
 
       if (error) throw error;
 
-      toast.success("✅ Product added successfully!");
+      toast.success(" Product added successfully!");
       form.reset();
     } catch (error: any) {
       console.error("Insert failed:", error.message);
