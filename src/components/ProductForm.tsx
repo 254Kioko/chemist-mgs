@@ -22,9 +22,15 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Package } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// ✅ Validation schema
+// ✅ Validation schema for product form
 const productSchema = z.object({
   supplierId: z.string().min(1, "Please select a supplier"),
   productName: z
@@ -56,6 +62,7 @@ interface Supplier {
 export default function ProductForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(true);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -68,33 +75,36 @@ export default function ProductForm() {
     },
   });
 
-  // ✅ Fetch suppliers from Supabase
+  // ✅ Fetch suppliers for dropdown
   useEffect(() => {
     const fetchSuppliers = async () => {
-      const { data, error } = await supabase
-        .from("suppliers")
-        .select("id, supplier_name")
-        .order("supplier_name", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("suppliers")
+          .select("id, supplier_name")
+          .order("supplier_name", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching suppliers:", error.message);
-        toast.error("Failed to load suppliers");
-      } else {
+        if (error) throw error;
         setSuppliers(data || []);
+      } catch (error: any) {
+        console.error("Error fetching suppliers:", error.message);
+        toast.error("Failed to load suppliers.");
+      } finally {
+        setLoadingSuppliers(false);
       }
     };
 
     fetchSuppliers();
   }, []);
 
-  // ✅ Handle form submission
+  // ✅ Handle product form submission
   const onSubmit = async (data: ProductFormValues) => {
     setIsSubmitting(true);
 
     try {
       const { error } = await supabase.from("products").insert([
         {
-          supplier_id: data.supplierId, // ✅ Link to supplier
+          supplier_id: data.supplierId,
           product_name: data.productName,
           batch_number: data.batchNumber,
           quantity: data.quantity,
@@ -109,7 +119,7 @@ export default function ProductForm() {
     } catch (error: any) {
       console.error("Insert failed:", error.message);
       toast.error(
-        "❌ Failed to add product. Check table fields or RLS policies."
+        "❌ Failed to add product. Check your table fields or RLS policies."
       );
     } finally {
       setIsSubmitting(false);
@@ -146,14 +156,16 @@ export default function ProductForm() {
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
-                      disabled={suppliers.length === 0}
+                      disabled={loadingSuppliers}
                     >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue
                             placeholder={
-                              suppliers.length === 0
+                              loadingSuppliers
                                 ? "Loading suppliers..."
+                                : suppliers.length === 0
+                                ? "No suppliers found"
                                 : "Select supplier"
                             }
                           />
@@ -238,10 +250,11 @@ export default function ProductForm() {
               />
             </div>
 
+            {/* ✅ Submit Button */}
             <div className="flex justify-end pt-4">
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || loadingSuppliers}
                 className="min-w-[150px]"
               >
                 {isSubmitting ? "Adding..." : "Add Product"}
