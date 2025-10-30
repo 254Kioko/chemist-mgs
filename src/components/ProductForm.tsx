@@ -350,23 +350,28 @@ export default function ProductForm() {
                     <th className="p-3 text-left">Expiry Date</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id} className="border-t hover:bg-accent/5">
-                      <td className="p-3">
-                        {product.suppliers?.supplier_name || "Unknown"}
-                      </td>
-                      <td className="p-3">{product.product_name}</td>
-                      <td className="p-3">{product.batch_number}</td>
-                      <td className="p-3">{product.quantity}</td>
-                      <td className="p-3">{product.cost_per_unit?.toFixed(2)}</td>
-                      <td className="p-3">{product.total_cost?.toFixed(2)}</td>
-                      <td className="p-3">
-                        {new Date(product.expiry_date).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+               <tbody>
+  {products.map((product) => (
+    <tr key={product.id} className="border-t hover:bg-accent/5">
+      <td className="p-3">{product.suppliers?.supplier_name || "Unknown"}</td>
+      <td className="p-3">{product.product_name}</td>
+      <td className="p-3">{product.batch_number}</td>
+      <td className="p-3">{product.quantity}</td>
+      <td className="p-3">{product.cost_per_unit?.toFixed(2)}</td>
+      <td className="p-3">{product.total_cost?.toFixed(2)}</td>
+      <td className="p-3">{new Date(product.expiry_date).toLocaleDateString()}</td>
+      <td className="p-3 text-right">
+        <Button
+          variant="secondary"
+          onClick={() => handleSyncClick(product)}
+        >
+          Sync
+        </Button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
               </table>
             </div>
           )}
