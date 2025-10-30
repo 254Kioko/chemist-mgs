@@ -183,7 +183,7 @@ export default function ProductForm() {
 
       if (fetchError) throw fetchError;
 
-      // Update or insert medicine
+      // ✅ Update or insert medicine — without price!
       if (existingMedicine) {
         const { error: updateError } = await supabase
           .from("medicines")
@@ -195,8 +195,7 @@ export default function ProductForm() {
         const { error: insertError } = await supabase.from("medicines").insert([
           {
             name: syncProduct.product_name,
-            cost: syncProduct.cost_per_unit,
-            quantity: syncQuantity,
+            quantity: syncQuantity, // ✅ only quantity, not price
           },
         ]);
         if (insertError) throw insertError;
@@ -249,6 +248,7 @@ export default function ProductForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Supplier Field */}
               <FormField
                 control={form.control}
                 name="supplierId"
@@ -278,6 +278,7 @@ export default function ProductForm() {
                 )}
               />
 
+              {/* Product Fields */}
               <FormField
                 control={form.control}
                 name="productName"
@@ -369,7 +370,7 @@ export default function ProductForm() {
           </form>
         </Form>
 
-        {/* TABLE */}
+        {/* PRODUCT TABLE */}
         <div className="mt-10">
           <h3 className="text-xl font-semibold mb-4">Products Supplied</h3>
           {products.length === 0 ? (
