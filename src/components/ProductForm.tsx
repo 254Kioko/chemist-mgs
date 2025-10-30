@@ -71,6 +71,9 @@ export default function ProductForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [syncProduct, setSyncProduct] = useState<Product | null>(null);
+  const [syncQuantity, setSyncQuantity] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -161,6 +164,57 @@ export default function ProductForm() {
     }
   };
 
+  // ✅ Sync Handlers
+  const handleSyncClick = (product: Product) => {
+    setSyncProduct(product);
+    setSyncQuantity(product.quantity);
+  };
+
+  const handleSyncConfirm = async () => {
+    if (!syncProduct) return;
+    setIsSyncing(true);
+
+    try {
+      // Check if medicine already exists
+      const { data: existingMedicine, error: fetchError } = await supabase
+        .from("medicines")
+        .select("id, quantity")
+        .eq("name", syncProduct.product_name)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
+
+      if (existingMedicine) {
+        // Update existing quantity
+        const newQuantity = existingMedicine.quantity + syncQuantity;
+        const { error: updateError } = await supabase
+          .from("medicines")
+          .update({ quantity: newQuantity })
+          .eq("id", existingMedicine.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new medicine
+        const { error: insertError } = await supabase.from("medicines").insert([
+          {
+            name: syncProduct.product_name,
+            cost: syncProduct.cost_per_unit,
+            quantity: syncQuantity,
+          },
+        ]);
+        if (insertError) throw insertError;
+      }
+
+      toast.success(`✅ Synced ${syncQuantity} units of ${syncProduct.product_name}`);
+      setSyncProduct(null);
+    } catch (error: any) {
+      console.error("Sync failed:", error.message);
+      toast.error("❌ Failed to sync product");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // ✅ Auto-update total cost when quantity or cost changes
   const totalCost = form.watch("quantity") * form.watch("costPerUnit");
 
@@ -183,8 +237,8 @@ export default function ProductForm() {
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* --- Form Fields --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Supplier Dropdown */}
               <FormField
                 control={form.control}
                 name="supplierId"
@@ -220,7 +274,6 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Product Name */}
               <FormField
                 control={form.control}
                 name="productName"
@@ -235,7 +288,6 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Batch Number */}
               <FormField
                 control={form.control}
                 name="batchNumber"
@@ -250,7 +302,6 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Quantity */}
               <FormField
                 control={form.control}
                 name="quantity"
@@ -263,10 +314,7 @@ export default function ProductForm() {
                         min="1"
                         placeholder="Enter quantity"
                         {...field}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value || "0");
-                          field.onChange(val);
-                        }}
+                        onChange={(e) => field.onChange(parseInt(e.target.value || "0"))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -274,7 +322,6 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Cost per Unit */}
               <FormField
                 control={form.control}
                 name="costPerUnit"
@@ -295,7 +342,6 @@ export default function ProductForm() {
                 )}
               />
 
-              {/* Total Cost */}
               <FormItem>
                 <FormLabel>Total Cost (KSh)</FormLabel>
                 <FormControl>
@@ -303,7 +349,6 @@ export default function ProductForm() {
                 </FormControl>
               </FormItem>
 
-              {/* Expiry Date */}
               <FormField
                 control={form.control}
                 name="expiryDate"
@@ -320,18 +365,14 @@ export default function ProductForm() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="min-w-[150px]"
-              >
+              <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
                 {isSubmitting ? "Adding..." : "Add Product"}
               </Button>
             </div>
           </form>
         </Form>
 
-        {/* ✅ Product List Table */}
+        {/* ✅ Product List */}
         <div className="mt-10">
           <h3 className="text-xl font-semibold mb-4">Products Supplied</h3>
           {products.length === 0 ? (
@@ -348,34 +389,63 @@ export default function ProductForm() {
                     <th className="p-3 text-left">Cost/Unit (KSh)</th>
                     <th className="p-3 text-left">Total Cost (KSh)</th>
                     <th className="p-3 text-left">Expiry Date</th>
+                    <th className="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
-               <tbody>
-  {products.map((product) => (
-    <tr key={product.id} className="border-t hover:bg-accent/5">
-      <td className="p-3">{product.suppliers?.supplier_name || "Unknown"}</td>
-      <td className="p-3">{product.product_name}</td>
-      <td className="p-3">{product.batch_number}</td>
-      <td className="p-3">{product.quantity}</td>
-      <td className="p-3">{product.cost_per_unit?.toFixed(2)}</td>
-      <td className="p-3">{product.total_cost?.toFixed(2)}</td>
-      <td className="p-3">{new Date(product.expiry_date).toLocaleDateString()}</td>
-      <td className="p-3 text-right">
-        <Button
-          variant="secondary"
-          onClick={() => handleSyncClick(product)}
-        >
-          Sync
-        </Button>
-      </td>
-    </tr>
-  ))}
-</tbody>
-
+                <tbody>
+                  {products.map((product) => (
+                    <tr key={product.id} className="border-t hover:bg-accent/5">
+                      <td className="p-3">{product.suppliers?.supplier_name || "Unknown"}</td>
+                      <td className="p-3">{product.product_name}</td>
+                      <td className="p-3">{product.batch_number}</td>
+                      <td className="p-3">{product.quantity}</td>
+                      <td className="p-3">{product.cost_per_unit?.toFixed(2)}</td>
+                      <td className="p-3">{product.total_cost?.toFixed(2)}</td>
+                      <td className="p-3">
+                        {new Date(product.expiry_date).toLocaleDateString()}
+                      </td>
+                      <td className="p-3 text-right">
+                        <Button variant="secondary" onClick={() => handleSyncClick(product)}>
+                          Sync
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           )}
         </div>
+
+        {/* ✅ Sync Modal */}
+        {syncProduct && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-96">
+              <h3 className="text-lg font-semibold mb-2">
+                Sync {syncProduct.product_name}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Enter the quantity you want to sync to the Medicines table:
+              </p>
+              <Input
+                type="number"
+                min="1"
+                max={syncProduct.quantity}
+                value={syncQuantity}
+                onChange={(e) => setSyncQuantity(parseInt(e.target.value))}
+                className="mb-4"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setSyncProduct(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSyncConfirm} disabled={isSyncing}>
+                  {isSyncing ? "Syncing..." : "Confirm Sync"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
