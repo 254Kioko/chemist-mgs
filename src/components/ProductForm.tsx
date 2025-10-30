@@ -97,7 +97,6 @@ export default function ProductForm() {
         .order("supplier_name", { ascending: true });
 
       if (error) {
-        console.error("Error fetching suppliers:", error.message);
         toast.error("Failed to load suppliers");
       } else {
         setSuppliers(data || []);
@@ -123,19 +122,14 @@ export default function ProductForm() {
       `)
       .order("id", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching products:", error.message);
-      toast.error("Failed to load products");
-    } else {
-      setProducts(data || []);
-    }
+    if (!error) setProducts(data || []);
   };
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  // ✅ Handle submit
+  // ✅ Handle form submit
   const onSubmit = async (data: ProductFormValues) => {
     setIsSubmitting(true);
 
@@ -155,16 +149,16 @@ export default function ProductForm() {
 
       toast.success("✅ Product added successfully!");
       form.reset();
-      fetchProducts(); // refresh table immediately
+      fetchProducts();
     } catch (error: any) {
-      console.error("Insert failed:", error.message);
-      toast.error("❌ Failed to add product. Check table fields or RLS policies.");
+      toast.error("❌ Failed to add product.");
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ✅ Sync Handlers
+  // ✅ Sync handlers
   const handleSyncClick = (product: Product) => {
     setSyncProduct(product);
     setSyncQuantity(product.quantity);
@@ -172,6 +166,11 @@ export default function ProductForm() {
 
   const handleSyncConfirm = async () => {
     if (!syncProduct) return;
+    if (syncQuantity < 1 || syncQuantity > syncProduct.quantity) {
+      toast.error("Invalid quantity selected");
+      return;
+    }
+
     setIsSyncing(true);
 
     try {
@@ -180,21 +179,19 @@ export default function ProductForm() {
         .from("medicines")
         .select("id, quantity")
         .eq("name", syncProduct.product_name)
-        .single();
+        .maybeSingle();
 
-      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
+      if (fetchError) throw fetchError;
 
+      // Update or insert medicine
       if (existingMedicine) {
-        // Update existing quantity
-        const newQuantity = existingMedicine.quantity + syncQuantity;
         const { error: updateError } = await supabase
           .from("medicines")
-          .update({ quantity: newQuantity })
+          .update({ quantity: existingMedicine.quantity + syncQuantity })
           .eq("id", existingMedicine.id);
 
         if (updateError) throw updateError;
       } else {
-        // Insert new medicine
         const { error: insertError } = await supabase.from("medicines").insert([
           {
             name: syncProduct.product_name,
@@ -205,39 +202,52 @@ export default function ProductForm() {
         if (insertError) throw insertError;
       }
 
-      toast.success(`✅ Synced ${syncQuantity} units of ${syncProduct.product_name}`);
+      // ✅ Reduce product quantity
+      const newQuantity = syncProduct.quantity - syncQuantity;
+      const { error: reduceError } = await supabase
+        .from("products")
+        .update({ quantity: newQuantity })
+        .eq("id", syncProduct.id);
+
+      if (reduceError) throw reduceError;
+
+      toast.success(
+        `✅ Synced ${syncQuantity} units. Remaining: ${newQuantity}`
+      );
+
       setSyncProduct(null);
+      fetchProducts(); // refresh table
     } catch (error: any) {
+      toast.error("❌ Failed to sync product.");
       console.error("Sync failed:", error.message);
-      toast.error("❌ Failed to sync product");
     } finally {
       setIsSyncing(false);
     }
   };
 
-  // ✅ Auto-update total cost when quantity or cost changes
+  // ✅ Auto-update total cost
   const totalCost = form.watch("quantity") * form.watch("costPerUnit");
 
   return (
     <Card className="shadow-lg border-border">
-      <CardHeader className="bg-gradient-to-r from-accent/5 to-primary/5 border-b">
+      <CardHeader className="bg-accent/5 border-b">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-accent/10">
             <Package className="h-6 w-6 text-accent" />
           </div>
           <div>
-            <CardTitle className="text-2xl">Product Inventory</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Product Inventory</CardTitle>
             <CardDescription>
-              Add new product with supplier, cost, and expiry details
+              Add and manage products supplied by vendors
             </CardDescription>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="pt-6">
+        {/* FORM */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* --- Form Fields --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -252,19 +262,13 @@ export default function ProductForm() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              suppliers.length === 0
-                                ? "No suppliers found"
-                                : "Select supplier"
-                            }
-                          />
+                          <SelectValue placeholder="Select supplier" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.supplier_name}
+                        {suppliers.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.supplier_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -312,7 +316,6 @@ export default function ProductForm() {
                       <Input
                         type="number"
                         min="1"
-                        placeholder="Enter quantity"
                         {...field}
                         onChange={(e) => field.onChange(parseInt(e.target.value || "0"))}
                       />
@@ -329,13 +332,7 @@ export default function ProductForm() {
                   <FormItem>
                     <FormLabel>Cost per Unit (KSh)</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Enter cost per unit"
-                        {...field}
-                      />
+                      <Input type="number" step="0.01" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -364,7 +361,7 @@ export default function ProductForm() {
               />
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end">
               <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
                 {isSubmitting ? "Adding..." : "Add Product"}
               </Button>
@@ -372,7 +369,7 @@ export default function ProductForm() {
           </form>
         </Form>
 
-        {/* ✅ Product List */}
+        {/* TABLE */}
         <div className="mt-10">
           <h3 className="text-xl font-semibold mb-4">Products Supplied</h3>
           {products.length === 0 ? (
@@ -383,29 +380,25 @@ export default function ProductForm() {
                 <thead className="bg-accent/10">
                   <tr>
                     <th className="p-3 text-left">Supplier</th>
-                    <th className="p-3 text-left">Product Name</th>
-                    <th className="p-3 text-left">Batch Number</th>
+                    <th className="p-3 text-left">Product</th>
+                    <th className="p-3 text-left">Batch</th>
                     <th className="p-3 text-left">Quantity</th>
-                    <th className="p-3 text-left">Cost/Unit (KSh)</th>
-                    <th className="p-3 text-left">Total Cost (KSh)</th>
-                    <th className="p-3 text-left">Expiry Date</th>
+                    <th className="p-3 text-left">Cost/Unit</th>
+                    <th className="p-3 text-left">Expiry</th>
                     <th className="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id} className="border-t hover:bg-accent/5">
-                      <td className="p-3">{product.suppliers?.supplier_name || "Unknown"}</td>
-                      <td className="p-3">{product.product_name}</td>
-                      <td className="p-3">{product.batch_number}</td>
-                      <td className="p-3">{product.quantity}</td>
-                      <td className="p-3">{product.cost_per_unit?.toFixed(2)}</td>
-                      <td className="p-3">{product.total_cost?.toFixed(2)}</td>
-                      <td className="p-3">
-                        {new Date(product.expiry_date).toLocaleDateString()}
-                      </td>
+                  {products.map((p) => (
+                    <tr key={p.id} className="border-t hover:bg-accent/5">
+                      <td className="p-3">{p.suppliers?.supplier_name || "Unknown"}</td>
+                      <td className="p-3">{p.product_name}</td>
+                      <td className="p-3">{p.batch_number}</td>
+                      <td className="p-3">{p.quantity}</td>
+                      <td className="p-3">{p.cost_per_unit?.toFixed(2)}</td>
+                      <td className="p-3">{new Date(p.expiry_date).toLocaleDateString()}</td>
                       <td className="p-3 text-right">
-                        <Button variant="secondary" onClick={() => handleSyncClick(product)}>
+                        <Button variant="secondary" onClick={() => handleSyncClick(p)}>
                           Sync
                         </Button>
                       </td>
@@ -417,7 +410,7 @@ export default function ProductForm() {
           )}
         </div>
 
-        {/* ✅ Sync Modal */}
+        {/* SYNC MODAL */}
         {syncProduct && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-96">
@@ -432,7 +425,7 @@ export default function ProductForm() {
                 min="1"
                 max={syncProduct.quantity}
                 value={syncQuantity}
-                onChange={(e) => setSyncQuantity(parseInt(e.target.value))}
+                onChange={(e) => setSyncQuantity(parseInt(e.target.value || "0"))}
                 className="mb-4"
               />
               <div className="flex justify-end gap-2">
