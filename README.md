@@ -1,73 +1,78 @@
-# Welcome to your Lovable project
+CHEMIST Management System
+Overview
 
-## Project info
+The CHEMIST Management System is a web application designed to help chemists manage inventory, sales, and customer orders efficiently. It solves the problem of manual tracking, reducing errors and streamlining daily operations.
+Demo Access
 
-**URL**: https://lovable.dev/projects/182440df-e25c-49ae-a1b4-62260b703f89
+To explore the CHEMIST Management System, use the following demo accounts:
 
-## How can I edit this code?
+Role	Username	Password
+Admin	admin	Chemist!2025@admin
+Cashier	cashier	cashier!2025@chemistt
 
-There are several ways of editing your application.
+Features
 
-**Use Lovable**
+Inventory Management with automatic low-stock alerts via SMS
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/182440df-e25c-49ae-a1b4-62260b703f89) and start prompting.
+Sales Tracking and Order Management
 
-Changes made via Lovable will be committed automatically to this repo.
+User Roles and Authentication for secure access
 
-**Use your preferred IDE**
+Dashboard with quick analytics on sales and stock levels
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Responsive design for desktops and mobile devices
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Technologies Used
 
-Follow these steps:
+Frontend: React, TypeScript, Tailwind CSS
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Backend & Database: Supabase (PostgreSQL)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Notifications: Twilio / SMS alerts for low stock
 
-# Step 3: Install the necessary dependencies.
-npm i
+Version Control: GitHub (commit history available)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Hosting / Deployment: Netlify
+
+Installation & Running Locally
+
+Clone the repository:
+
+git clone https://github.com/254Kioko/chemist-mgs.git
+cd chemist-mgs
+
+Install dependencies:
+
+npm install
+
+Setup environment variables from .env file (Supabase credentials, Twilio keys, etc.)
+
+Run the project:
+
 npm run dev
-```
 
-**Edit a file directly in GitHub**
+Access the application at http://localhost:5173
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Login credentials and detailed instructions are included in the README for demo access.
 
-**Use GitHub Codespaces**
+Live Demo
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+CHEMIST Management System Live
 
-## What technologies are used for this project?
+My Contributions
 
-This project is built with:
+Developed the inventory and product management modules
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Implemented SMS alert notifications for low stock items
 
-## How can I deploy this project?
+Designed and integrated the dashboard and responsive UI
 
-Simply open [Lovable](https://lovable.dev/projects/182440df-e25c-49ae-a1b4-62260b703f89) and click on Share -> Publish.
+Connected frontend to Supabase backend and handled authentication
 
-## Can I connect a custom domain to my Lovable project?
+Future Improvements
 
-Yes, you can!
+Add advanced reporting analytics
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Implement role-based dashboards with customizable access
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Integrate mobile push notifications
